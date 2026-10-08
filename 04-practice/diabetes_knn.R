@@ -24,19 +24,36 @@ x <- as.data.frame(lapply(data[, 1:7], normalize))
 y <- data$type
 
 train_idx <- sample(nrow(data), size = 0.7 * nrow(data))
+train_x <- x[train_idx, ]
+train_y <- y[train_idx]
+test_x <- x[-train_idx, ]
+test_y <- y[-train_idx]
 
-best <- NULL
-for (k in seq(3, 25, by = 2)) {
-  pred <- knn(x[train_idx, ], x[-train_idx, ], cl = y[train_idx], k = k)
-  acc <- mean(pred == y[-train_idx])
-  if (is.null(best) || acc > best$acc) best <- list(k = k, acc = acc, pred = pred)
+# choose k with 5-fold cross-validation on the training data only,
+# so the test set is only used once at the end
+folds <- sample(rep(1:5, length.out = nrow(train_x)))
+cv_accuracy <- function(k) {
+  acc <- c()
+  for (f in 1:5) {
+    val <- folds == f
+    p <- knn(train_x[!val, ], train_x[val, ], cl = train_y[!val], k = k)
+    acc <- c(acc, mean(p == train_y[val]))
+  }
+  mean(acc)
 }
 
-print(paste("best k:", best$k))
-print(paste("accuracy:", round(best$acc * 100, 1), "%"))
-table(predicted = best$pred, real = y[-train_idx])
+ks <- seq(3, 25, by = 2)
+cv_results <- sapply(ks, cv_accuracy)
+best_k <- ks[which.max(cv_results)]
+print(paste("best k on cross-validation:", best_k))
 
-if (best$acc >= 0.75) {
+# final evaluation on the test set
+pred <- knn(train_x, test_x, cl = train_y, k = best_k)
+accuracy <- mean(pred == test_y)
+print(paste("test accuracy:", round(accuracy * 100, 1), "%"))
+table(predicted = pred, real = test_y)
+
+if (accuracy >= 0.75) {
   print("goal reached: at least 75% accuracy")
 } else {
   print("below the 75% goal")
