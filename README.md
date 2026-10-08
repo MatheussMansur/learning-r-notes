@@ -12,4 +12,4 @@ My notes and practice scripts from the "Análise de Dados em Linguagem R" course
 
 The course practice is done in videos, so the scripts here are my own versions of what each module covers.
 
-Run a script with `Rscript <file>.R`. Packages used: dplyr, ggplot2, class, rpart.
+Run a script with `Rscript <file>.R`. Packages used: dplyr, ggplot2, class, rpart, MASS (the last three come with R).
